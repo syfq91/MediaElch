@@ -1,0 +1,15 @@
+{
+  "name": "Alien",
+  "movieposter": [
+    {"id": "abc", "url": "https://assets.fanart.tv/fanart/movies/348/movieposter/alien.jpg", "likes": "12", "lang": "en"}
+  ],
+  "moviebackground": [
+    {"id": "def", "url": "https://assets.fanart.tv/fanart/movies/348/moviebackground/alien-bg.jpg", "lang": ""}
+  ],
+  "hdmovielogo": [
+    {"id": "ghi", "url": "https://assets.fanart.tv/fanart/movies/348/hdmovielogo/alien-logo.png", "lang": "en"}
+  ],
+  "seasonposter": {
+    "1": [{"id": "jkl", "url": "https://assets.fanart.tv/fanart/movies/348/seasonposter/season1.jpg", "lang": "en"}]
+  }
+}
