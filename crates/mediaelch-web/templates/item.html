@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }} · MediaElch{% endblock %}
+{% block content %}
+<article class="detail">
+  <a href="/" hx-get="/ui/library" hx-target="#main" hx-swap="innerHTML">← Library</a>
+  <h1>{{ item.title }}</h1>
+  <p class="meta">{{ item.kind }}
+    {% match item.year %}{% when Some with (year) %} · {{ year }}{% when None %}{% endmatch %}
+    {% match item.certification %}{% when Some with (cert) %} · {{ cert }}{% when None %}{% endmatch %}
+  </p>
+
+  {% match item.overview %}{% when Some with (text) %}<p class="overview">{{ text }}</p>{% when None %}{% endmatch %}
+
+  <dl class="facts">
+    {% match item.ids.imdb %}{% when Some with (id) %}<dt>IMDb</dt><dd>{{ id }}</dd>{% when None %}{% endmatch %}
+    {% match item.ids.tmdb %}{% when Some with (id) %}<dt>TMDB</dt><dd>{{ id }}</dd>{% when None %}{% endmatch %}
+    {% match item.season_number %}{% when Some with (season) %}<dt>Season</dt><dd>{{ season }}</dd>{% when None %}{% endmatch %}
+    {% match item.episode_number %}{% when Some with (episode) %}<dt>Episode</dt><dd>{{ episode }}</dd>{% when None %}{% endmatch %}
+    {% if !item.genres.is_empty() %}<dt>Genres</dt><dd>{{ item.genres|join(", ") }}</dd>{% endif %}
+    {% if !item.studios.is_empty() %}<dt>Studios</dt><dd>{{ item.studios|join(", ") }}</dd>{% endif %}
+  </dl>
+
+  {% if !item.credits.is_empty() %}
+  <h2>Credits</h2>
+  <ul class="credits">
+    {% for credit in item.credits %}
+    <li><strong>{{ credit.name }}</strong> <span class="role">{{ credit.kind }}{% match credit.role %}{% when Some with (role) %} · {{ role }}{% when None %}{% endmatch %}</span></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if !item.images.is_empty() %}
+  <h2>Artwork</h2>
+  <div class="thumbs">
+    {% for image in item.images %}
+    <img src="/api/items/{{ item.id }}/images/{{ image.kind }}" alt="{{ image.kind }}" loading="lazy">
+    {% endfor %}
+  </div>
+  {% endif %}
+</article>
+{% endblock %}

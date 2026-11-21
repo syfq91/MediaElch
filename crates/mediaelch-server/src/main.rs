@@ -4,6 +4,7 @@ mod api;
 mod app;
 mod cli;
 mod config;
+mod ui;
 
 use std::error::Error;
 use std::path::PathBuf;

@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::app::AppState;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 pub struct ItemQuery {
     pub kind: Option<String>,
     pub q: Option<String>,
@@ -101,7 +101,7 @@ pub async fn get_item(
         .ok_or(StatusCode::NOT_FOUND)
 }
 
-pub async fn start_scan(State(state): State<Arc<AppState>>) -> Json<ScanStart> {
+pub fn start_scan_job(state: &Arc<AppState>) -> ScanStart {
     let job_id = {
         let mut counter = state.job_counter.lock().unwrap();
         *counter += 1;
@@ -116,7 +116,7 @@ pub async fn start_scan(State(state): State<Arc<AppState>>) -> Json<ScanStart> {
     };
     state.scan_jobs.lock().unwrap().insert(job_id.clone(), job);
 
-    let worker_state = Arc::clone(&state);
+    let worker_state = Arc::clone(state);
     let worker_job = job_id.clone();
     tokio::spawn(async move {
         set_job(&worker_state, &worker_job, "running", 0, 0, None);
@@ -148,7 +148,11 @@ pub async fn start_scan(State(state): State<Arc<AppState>>) -> Json<ScanStart> {
         }
     });
 
-    Json(ScanStart { job_id })
+    ScanStart { job_id }
+}
+
+pub async fn start_scan(State(state): State<Arc<AppState>>) -> Json<ScanStart> {
+    Json(start_scan_job(&state))
 }
 
 pub async fn scan_status(

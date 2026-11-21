@@ -1,0 +1,4 @@
+<span class="job" hx-get="/ui/scan/{{ job.id }}" hx-trigger="every 1s" hx-swap="outerHTML">
+  Scan {{ job.id }}: {{ job.status }} ({{ job.processed }}/{{ job.total }})
+  {% match job.error %}{% when Some with (error) %} — {{ error }}{% when None %}{% endmatch %}
+</span>

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Library · MediaElch{% endblock %}
+{% block content %}
+<section class="toolbar">
+  <input type="search" name="q" placeholder="Search titles…"
+         hx-get="/ui/library" hx-trigger="input changed delay:300ms"
+         hx-target="#main" hx-swap="innerHTML">
+</section>
+
+<section id="grid" class="grid">
+  {% for item in items %}
+  <article class="card">
+    <a href="/ui/items/{{ item.id }}" hx-get="/ui/items/{{ item.id }}"
+       hx-target="#main" hx-swap="innerHTML">
+      {% if item.has_poster %}
+      <img src="{{ item.poster_url }}" alt="" loading="lazy">
+      {% else %}
+      <div class="placeholder placeholder-{{ item.kind }}">{{ item.kind }}</div>
+      {% endif %}
+      <h2>{{ item.title }}</h2>
+      <p class="subtitle">{{ item.subtitle }}</p>
+    </a>
+  </article>
+  {% endfor %}
+  {% if items.is_empty() %}
+  <p class="empty">No media yet. Add directories to <code>media_directories</code> in the
+    configuration and press <strong>Scan library</strong>.</p>
+  {% endif %}
+</section>
+<p class="count">{{ total }} item(s)</p>
+{% endblock %}

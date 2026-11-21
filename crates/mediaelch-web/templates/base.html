@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}MediaElch{% endblock %}</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>MediaElch</h1>
+    <nav>
+      <a href="/" hx-get="/ui/library" hx-target="#main" hx-swap="innerHTML">Library</a>
+      <button type="button" hx-post="/ui/scan" hx-target="#scan-status" hx-swap="innerHTML">Scan library</button>
+      <span id="scan-status" aria-live="polite"></span>
+    </nav>
+  </header>
+  <main id="main">{% block content %}{% endblock %}</main>
+</body>
+</html>

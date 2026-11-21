@@ -4,16 +4,16 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
-use axum::extract::State;
+use axum::extract::{Query, State};
 use axum::http::StatusCode;
-use axum::response::Html;
 use axum::routing::get;
 use axum::{Json, Router};
 use mediaelch_db::Database;
 use mediaelch_fs::ScanRoot;
 use serde::{Deserialize, Serialize};
 
-use crate::api::{self, ScanJob};
+use crate::api::{self, ItemQuery, ScanJob};
+use crate::ui;
 
 /// State shared by every request handler.
 pub struct AppState {
@@ -64,16 +64,14 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/healthz", get(healthz))
         .route("/api/version", get(version))
         .merge(api::routes())
+        .merge(ui::routes())
         .with_state(state)
 }
 
-async fn root() -> Html<&'static str> {
-    Html(
-        "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">\
-         <title>MediaElch</title></head><body><h1>MediaElch server</h1>\
-         <p>The headless server is running. The web UI is added in a later phase.</p>\
-         </body></html>",
-    )
+async fn root(
+    State(state): State<Arc<AppState>>,
+) -> Result<axum::response::Html<String>, StatusCode> {
+    ui::library_page(State(state), Query(ItemQuery::default())).await
 }
 
 async fn healthz(State(state): State<Arc<AppState>>) -> (StatusCode, Json<Health>) {
