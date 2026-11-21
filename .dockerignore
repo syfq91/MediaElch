@@ -2,4 +2,5 @@
 *
 !Cargo.toml
 !Cargo.lock
-!crates/
+!crates
+!crates/**

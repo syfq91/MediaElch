@@ -81,6 +81,13 @@ and reads `/etc/mediaelch/config.toml`. If media lives under `/home`, adjust
 volume and media directories read-only. See the comment block at the top of
 the root `Dockerfile`.
 
+The image sets `MEDIAELCH_SERVER__BIND=0.0.0.0:8080` and
+`MEDIAELCH_LIBRARY__DATA_DIR=/var/lib/mediaelch`, so `-p 8080:8080` works
+without editing your config. It also includes a `/healthz` health check. If
+you change the bind port inside the container, override
+`MEDIAELCH_SERVER__BIND` (the health check follows it) and the `-p` mapping
+together.
+
 ## Backups and cutover
 
 See [backup.md](backup.md) for backup/restore commands and
