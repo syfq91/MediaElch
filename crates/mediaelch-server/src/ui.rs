@@ -8,14 +8,17 @@ use axum::http::{header, StatusCode};
 use axum::response::{Html, IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::Router;
-use mediaelch_core::{ImageKind, MediaItem, MediaKind};
+use mediaelch_core::{ExternalIds, ImageKind, MediaItem, MediaKind};
 use mediaelch_db::repository::MediaRepository;
+use mediaelch_scrape::{ExternalId, SearchQuery};
 use mediaelch_web::{
-    ItemCard, ItemView, LibraryView, ScanJobView, ScanStatusView, ToolsView, APP_CSS,
+    HitCard, ItemCard, ItemView, LibraryView, ScanJobView, ScanStatusView, ScrapeResultsView,
+    ScrapeView, ToolsView, APP_CSS,
 };
 
 use crate::api::{self, ItemQuery};
 use crate::app::AppState;
+use crate::scrape_api::{ScrapeRequest, ScrapeSearchQuery};
 use crate::write_api::{self, ExportRequest};
 
 pub fn routes() -> Router<Arc<AppState>> {
@@ -25,6 +28,9 @@ pub fn routes() -> Router<Arc<AppState>> {
         .route("/ui/scan", post(ui_scan))
         .route("/ui/scan/{job_id}", get(ui_scan_status))
         .route("/ui/tools", get(tools_page))
+        .route("/ui/scrape", get(scrape_page))
+        .route("/ui/scrape/search", get(scrape_search))
+        .route("/ui/scrape/start", post(scrape_start))
         .route("/ui/export", post(export_form))
         .route("/static/app.css", get(css))
 }
@@ -104,6 +110,77 @@ pub async fn export_form(
     Ok(Html(format!(
         "<a href=\"/api/export/{}\">Download {}</a> ({} items)",
         result.filename, result.filename, result.items
+    )))
+}
+
+pub async fn scrape_page() -> Result<Html<String>, StatusCode> {
+    ScrapeView
+        .render()
+        .map(Html)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+}
+
+pub async fn scrape_search(
+    State(state): State<Arc<AppState>>,
+    Query(query): Query<ScrapeSearchQuery>,
+) -> Result<Html<String>, StatusCode> {
+    let scraper = state
+        .scrapers
+        .metadata(&query.provider)
+        .ok_or(StatusCode::BAD_REQUEST)?;
+    let hits = scraper
+        .search(&SearchQuery {
+            text: Some(query.q),
+            ids: ExternalIds::default(),
+            language: state.scrapers.config().language.clone(),
+            include_adult: false,
+        })
+        .await
+        .map_err(|error| {
+            tracing::error!(%error, "scraper search failed");
+            StatusCode::BAD_GATEWAY
+        })?;
+
+    let cards = hits
+        .into_iter()
+        .map(|hit| {
+            let (imdb_id, tmdb_id, tvmaze_id) = match hit.external_id {
+                ExternalId::Imdb(id) => (id, String::new(), String::new()),
+                ExternalId::Tmdb(id) => (String::new(), id.to_string(), String::new()),
+                ExternalId::TvMaze(id) => (String::new(), String::new(), id.to_string()),
+                ExternalId::TvDb(id) => (String::new(), String::new(), id.to_string()),
+            };
+            HitCard {
+                title: hit.title,
+                year: hit.year,
+                year_value: hit.year.map(|year| year.to_string()).unwrap_or_default(),
+                kind_value: hit
+                    .kind
+                    .map(|kind| kind.as_str().to_owned())
+                    .unwrap_or_default(),
+                kind: hit.kind.map(|kind| kind.to_string()),
+                provider: query.provider.clone(),
+                imdb_id,
+                tmdb_id,
+                tvmaze_id,
+            }
+        })
+        .collect();
+
+    ScrapeResultsView { hits: cards }
+        .render()
+        .map(Html)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+}
+
+pub async fn scrape_start(
+    State(state): State<Arc<AppState>>,
+    Form(request): Form<ScrapeRequest>,
+) -> Result<Html<String>, StatusCode> {
+    let job = crate::scrape_api::start_scrape_job(&state, &request)?;
+    Ok(Html(format!(
+        "<span hx-get=\"/api/scrape/{}\" hx-trigger=\"every 1s\" hx-swap=\"outerHTML\">{}: queued</span>",
+        job.id, job.id
     )))
 }
 

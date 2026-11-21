@@ -7,6 +7,24 @@
   <button type="button" hx-post="/api/items/{{ item.id }}/nfo"
           hx-target="#nfo-status" hx-swap="innerHTML">Save NFO</button>
   <span id="nfo-status" aria-live="polite"></span>
+  <form hx-post="/ui/scrape/start" hx-target="#scrape-status" hx-swap="innerHTML" style="display:inline">
+    <input type="hidden" name="item_id" value="{{ item.id }}">
+    <label>Provider
+      <select name="provider">
+        <option value="tmdb">TMDB</option>
+        <option value="tvmaze">TVMaze</option>
+      </select>
+    </label>
+    <label>Artwork
+      <select name="image_provider">
+        <option value="">None</option>
+        <option value="tmdb">TMDB</option>
+        <option value="fanarttv">fanart.tv</option>
+      </select>
+    </label>
+    <button type="submit">Scrape metadata</button>
+  </form>
+  <span id="scrape-status" aria-live="polite"></span>
   <p class="meta">{{ item.kind }}
     {% match item.year %}{% when Some with (year) %} · {{ year }}{% when None %}{% endmatch %}
     {% match item.certification %}{% when Some with (cert) %} · {{ cert }}{% when None %}{% endmatch %}

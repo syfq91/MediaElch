@@ -1,0 +1,19 @@
+<ul class="results">
+  {% for hit in hits %}
+  <li>
+    <strong>{{ hit.title }}</strong>
+    {% match hit.year %}{% when Some with (year) %} ({{ year }}){% when None %}{% endmatch %}
+    <span class="role">{{ hit.provider }}{% match hit.kind %}{% when Some with (kind) %} · {{ kind }}{% when None %}{% endmatch %}</span>
+    <form hx-post="/api/items/add" hx-target="#scrape-results" hx-swap="afterbegin" style="display:inline">
+      <input type="hidden" name="kind" value="{{ hit.kind_value }}">
+      <input type="hidden" name="title" value="{{ hit.title }}">
+      <input type="hidden" name="year" value="{{ hit.year_value }}">
+      <input type="hidden" name="imdb_id" value="{{ hit.imdb_id }}">
+      <input type="hidden" name="tmdb_id" value="{{ hit.tmdb_id }}">
+      <input type="hidden" name="tvmaze_id" value="{{ hit.tvmaze_id }}">
+      <button type="submit">Add</button>
+    </form>
+  </li>
+  {% endfor %}
+  {% if hits.is_empty() %}<li>No results.</li>{% endif %}
+</ul>

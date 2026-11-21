@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Scrape · MediaElch{% endblock %}
+{% block content %}
+<article class="detail">
+  <h1>Scrape metadata</h1>
+  <p>Search a provider, add a result to your library, then open its detail page to scrape metadata.</p>
+
+  <form hx-get="/ui/scrape/search" hx-target="#scrape-results" hx-swap="innerHTML">
+    <label>Provider
+      <select name="provider">
+        <option value="tmdb">TMDB</option>
+        <option value="tvmaze">TVMaze</option>
+      </select>
+    </label>
+    <label>Search term <input name="q" size="40" placeholder="Movie or show title"></label>
+    <button type="submit">Search</button>
+  </form>
+
+  <section id="scrape-results" aria-live="polite"></section>
+
+  <h2>Live jobs</h2>
+  <div id="scrape-jobs" hx-ext="sse" connect-stream="/api/scrape/events"></div>
+  <script>
+    (function () {
+      const target = document.getElementById('scrape-jobs');
+      if (!target || !window.EventSource) return;
+      const source = new EventSource('/api/scrape/events');
+      source.addEventListener('jobs', function (event) {
+        const jobs = JSON.parse(event.data);
+        target.textContent = jobs.map(j => `${j.id}: ${j.status} (${j.processed}/${j.total})`).join(' · ');
+      });
+    })();
+  </script>
+</article>
+{% endblock %}

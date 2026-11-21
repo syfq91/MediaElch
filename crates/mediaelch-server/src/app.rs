@@ -14,6 +14,7 @@ use mediaelch_image::ImageConfig;
 use serde::{Deserialize, Serialize};
 
 use crate::api::{self, ItemQuery, ScanJob};
+use crate::scrape_api::{ScrapeJob, ScrapeRegistry};
 use crate::ui;
 use crate::write_api;
 
@@ -26,6 +27,9 @@ pub struct AppState {
     pub scan_jobs: Arc<Mutex<HashMap<String, ScanJob>>>,
     pub job_counter: Arc<Mutex<u64>>,
     pub image_config: ImageConfig,
+    pub scrapers: Arc<ScrapeRegistry>,
+    pub scrape_jobs: Arc<Mutex<HashMap<String, ScrapeJob>>>,
+    pub scrape_counter: Arc<Mutex<u64>>,
 }
 
 impl AppState {
@@ -35,6 +39,7 @@ impl AppState {
         roots: Vec<ScanRoot>,
         data_dir: PathBuf,
         image_config: ImageConfig,
+        scrapers: Arc<ScrapeRegistry>,
     ) -> Self {
         Self {
             db: Arc::new(Mutex::new(db)),
@@ -44,6 +49,9 @@ impl AppState {
             scan_jobs: Arc::new(Mutex::new(HashMap::new())),
             job_counter: Arc::new(Mutex::new(0)),
             image_config,
+            scrapers,
+            scrape_jobs: Arc::new(Mutex::new(HashMap::new())),
+            scrape_counter: Arc::new(Mutex::new(0)),
         }
     }
 }
@@ -70,6 +78,7 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/api/version", get(version))
         .merge(api::routes())
         .merge(write_api::routes())
+        .merge(crate::scrape_api::routes())
         .merge(ui::routes())
         .with_state(state)
 }
@@ -123,6 +132,9 @@ mod tests {
             Vec::new(),
             PathBuf::from("/tmp"),
             ImageConfig::default(),
+            Arc::new(ScrapeRegistry::new(
+                mediaelch_scrape::ScrapeConfig::default(),
+            )),
         );
         router(Arc::new(state))
     }

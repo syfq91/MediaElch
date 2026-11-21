@@ -267,6 +267,9 @@ mod tests {
             Vec::new(),
             PathBuf::from("/tmp/mediaelch-test"),
             ImageConfig::default(),
+            Arc::new(crate::scrape_api::ScrapeRegistry::new(
+                mediaelch_scrape::ScrapeConfig::default(),
+            )),
         ))
     }
 

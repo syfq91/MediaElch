@@ -4,6 +4,10 @@ pub mod fanarttv;
 pub mod tmdb;
 pub mod tvmaze;
 
+pub use fanarttv::FanartTv;
+pub use tmdb::TmdbScraper;
+pub use tvmaze::TvMazeScraper;
+
 use std::collections::HashMap;
 use std::sync::Mutex;
 use std::time::Duration;
@@ -28,7 +32,7 @@ pub enum ScrapeError {
     MissingKey(&'static str),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub enum ExternalId {
     Imdb(String),
     Tmdb(u64),
@@ -54,7 +58,7 @@ pub struct SearchQuery {
     pub include_adult: bool,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct SearchHit {
     pub external_id: ExternalId,
     pub kind: Option<MediaKind>,
@@ -101,6 +105,11 @@ pub trait MetadataScraper: Send + Sync {
         details: &DetailSet,
         language: &str,
     ) -> Result<MediaItem, ScrapeError>;
+
+    /// Providers that can return a whole season/list may implement this.
+    async fn load_episodes(&self, _id: &ExternalId) -> Result<Vec<MediaItem>, ScrapeError> {
+        Err(ScrapeError::NotFound)
+    }
 }
 
 #[async_trait::async_trait]

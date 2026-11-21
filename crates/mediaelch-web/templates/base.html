@@ -13,6 +13,7 @@
     <nav>
       <a href="/" hx-get="/ui/library" hx-target="#main" hx-swap="innerHTML">Library</a>
       <a href="/ui/tools" hx-get="/ui/tools" hx-target="#main" hx-swap="innerHTML">Tools</a>
+      <a href="/ui/scrape" hx-get="/ui/scrape" hx-target="#main" hx-swap="innerHTML">Scrape</a>
       <button type="button" hx-post="/ui/scan" hx-target="#scan-status" hx-swap="innerHTML">Scan library</button>
       <span id="scan-status" aria-live="polite"></span>
     </nav>

@@ -388,6 +388,9 @@ mod tests {
             }],
             PathBuf::from("/tmp"),
             mediaelch_image::ImageConfig::default(),
+            Arc::new(crate::scrape_api::ScrapeRegistry::new(
+                mediaelch_scrape::ScrapeConfig::default(),
+            )),
         ))
     }
 

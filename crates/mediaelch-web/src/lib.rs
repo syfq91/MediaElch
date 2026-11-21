@@ -41,6 +41,29 @@ pub struct ScanJobView {
 #[template(path = "tools.html")]
 pub struct ToolsView;
 
+#[derive(Debug, Clone)]
+pub struct HitCard {
+    pub title: String,
+    pub year: Option<i32>,
+    pub year_value: String,
+    pub kind: Option<String>,
+    pub kind_value: String,
+    pub provider: String,
+    pub imdb_id: String,
+    pub tmdb_id: String,
+    pub tvmaze_id: String,
+}
+
+#[derive(Debug, Template)]
+#[template(path = "scrape_results.html")]
+pub struct ScrapeResultsView {
+    pub hits: Vec<HitCard>,
+}
+
+#[derive(Debug, Template)]
+#[template(path = "scrape.html")]
+pub struct ScrapeView;
+
 #[derive(Debug, Template)]
 #[template(path = "scan_status.html")]
 pub struct ScanStatusView {

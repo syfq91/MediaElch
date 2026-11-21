@@ -4,6 +4,7 @@ mod api;
 mod app;
 mod cli;
 mod config;
+mod scrape_api;
 mod ui;
 mod write_api;
 
@@ -58,6 +59,16 @@ async fn run() -> Result<(), Box<dyn Error>> {
             max_poster_width: config.images.max_poster_width,
             max_backdrop_width: config.images.max_backdrop_width,
         },
+        Arc::new(scrape_api::ScrapeRegistry::new(
+            mediaelch_scrape::ScrapeConfig {
+                tmdb_api_key: config.scrapers.tmdb_api_key.clone(),
+                fanarttv_api_key: config.scrapers.fanarttv_api_key.clone(),
+                fanarttv_client_key: config.scrapers.fanarttv_client_key.clone(),
+                language: config.scrapers.language.clone(),
+                proxy: config.scrapers.proxy.clone(),
+                ..mediaelch_scrape::ScrapeConfig::default()
+            },
+        )),
     ));
     let listener = tokio::net::TcpListener::bind(config.bind_addr()?).await?;
     tracing::info!(address = %listener.local_addr()?, "HTTP server listening");

@@ -55,6 +55,10 @@ impl MetadataScraper for TvMazeScraper {
         &[MediaKind::TvShow, MediaKind::Episode]
     }
 
+    async fn load_episodes(&self, id: &ExternalId) -> Result<Vec<MediaItem>, ScrapeError> {
+        TvMazeScraper::load_episodes(self, id).await
+    }
+
     async fn search(&self, query: &SearchQuery) -> Result<Vec<SearchHit>, ScrapeError> {
         let path = if let Some(imdb) = query.ids.imdb.as_deref() {
             format!("/lookup/shows?imdb={imdb}")
