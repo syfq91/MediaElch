@@ -14,6 +14,7 @@ target_sources(
     media_center/testKodi_v18_music_artist.cpp
     media_center/testKodi_v18_show.cpp
     media_center/testKodi_v20_show.cpp
+    database/testPersistence.cpp
 )
 
 target_link_libraries(
