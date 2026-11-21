@@ -9,12 +9,14 @@
 !/.git-blame-ignore-revs
 !/.gitmodules
 !/.editorconfig
+!/.dockerignore
 
 /*.md
 !/README.md
 !/CHANGELOG.md
 !/CONTRIBUTING.md
 !/rewrite-plan.md
+!/deploy/README.md
 
 CMakeLists.txt.user*
 CMakeUserPresets.json

@@ -1,0 +1,5 @@
+# Only the Rust workspace is needed for the image build.
+*
+!Cargo.toml
+!Cargo.lock
+!crates/

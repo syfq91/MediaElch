@@ -1,0 +1,25 @@
+[Unit]
+Description=MediaElch headless server
+Documentation=https://github.com/Komet/MediaElch
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mediaelch
+Group=mediaelch
+Environment=MEDIAELCH_CONFIG=/etc/mediaelch/config.toml
+ExecStart=/usr/local/bin/mediaelch-server --config /etc/mediaelch/config.toml
+Restart=on-failure
+RestartSec=5
+
+# Hardening. If the media library lives under /home, either remove ProtectHome
+# or add its path to ReadWritePaths (read-only mounts can use ReadOnlyPaths).
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/mediaelch
+
+[Install]
+WantedBy=multi-user.target
