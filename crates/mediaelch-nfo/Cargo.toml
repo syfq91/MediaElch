@@ -10,3 +10,6 @@ rust-version.workspace = true
 mediaelch-core.workspace = true
 roxmltree.workspace = true
 thiserror.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
