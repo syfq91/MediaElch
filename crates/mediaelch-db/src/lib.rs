@@ -3,6 +3,8 @@
 //! The database is created from scratch with our own schema; the legacy
 //! `MediaElch.sqlite` cache of the Qt application is never opened.
 
+pub mod migrations;
+
 use std::path::Path;
 
 use thiserror::Error;
@@ -17,6 +19,13 @@ pub enum DbError {
     },
     #[error("database operation failed: {0}")]
     Sql(#[from] rusqlite::Error),
+    #[error("migration {name} ({version}) failed: {source}")]
+    Migration {
+        version: u32,
+        name: &'static str,
+        #[source]
+        source: rusqlite::Error,
+    },
 }
 
 /// An open connection to the server-owned SQLite database.
@@ -43,10 +52,11 @@ impl Database {
         Self::from_connection(rusqlite::Connection::open_in_memory()?)
     }
 
-    fn from_connection(conn: rusqlite::Connection) -> Result<Self, DbError> {
+    fn from_connection(mut conn: rusqlite::Connection) -> Result<Self, DbError> {
         conn.pragma_update(None, "journal_mode", "WAL")?;
         conn.pragma_update(None, "foreign_keys", "ON")?;
         conn.pragma_update(None, "busy_timeout", 5000)?;
+        migrations::migrate(&mut conn)?;
         Ok(Self { conn })
     }
 
