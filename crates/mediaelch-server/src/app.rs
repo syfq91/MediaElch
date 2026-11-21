@@ -10,6 +10,7 @@ use axum::routing::get;
 use axum::{Json, Router};
 use mediaelch_db::Database;
 use mediaelch_fs::ScanRoot;
+use mediaelch_image::ImageConfig;
 use serde::{Deserialize, Serialize};
 
 use crate::api::{self, ItemQuery, ScanJob};
@@ -23,6 +24,7 @@ pub struct AppState {
     pub data_dir: PathBuf,
     pub scan_jobs: Arc<Mutex<HashMap<String, ScanJob>>>,
     pub job_counter: Arc<Mutex<u64>>,
+    pub image_config: ImageConfig,
 }
 
 impl AppState {
@@ -31,6 +33,7 @@ impl AppState {
         version: &'static str,
         roots: Vec<ScanRoot>,
         data_dir: PathBuf,
+        image_config: ImageConfig,
     ) -> Self {
         Self {
             db: Arc::new(Mutex::new(db)),
@@ -39,6 +42,7 @@ impl AppState {
             data_dir,
             scan_jobs: Arc::new(Mutex::new(HashMap::new())),
             job_counter: Arc::new(Mutex::new(0)),
+            image_config,
         }
     }
 }
@@ -116,6 +120,7 @@ mod tests {
             "test-version",
             Vec::new(),
             PathBuf::from("/tmp"),
+            ImageConfig::default(),
         );
         router(Arc::new(state))
     }

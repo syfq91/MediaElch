@@ -11,6 +11,7 @@ use axum::{Json, Router};
 use mediaelch_core::MediaKind;
 use mediaelch_db::repository::MediaRepository;
 use mediaelch_fs::{ScanConfig, ScanRoot, Scanner};
+use mediaelch_image::ImageDownloader;
 use mediaelch_nfo::NfoReader;
 use serde::{Deserialize, Serialize};
 
@@ -44,11 +45,21 @@ pub struct ScanStart {
     pub job_id: String,
 }
 
+#[derive(Debug, Serialize)]
+pub struct ImageDownloadSummary {
+    pub downloaded: usize,
+    pub failed: Vec<String>,
+}
+
 pub fn routes() -> Router<Arc<AppState>> {
     Router::new()
         .route("/api/items", get(list_items))
         .route("/api/items/{id}", get(get_item))
         .route("/api/items/{id}/images/{kind}", get(item_image))
+        .route(
+            "/api/items/{id}/images/download",
+            post(download_item_images),
+        )
         .route("/api/scan", post(start_scan))
         .route("/api/scan/{job_id}", get(scan_status))
 }
@@ -206,6 +217,61 @@ pub async fn item_image(
     Ok(([(header::CONTENT_TYPE, content_type)], bytes).into_response())
 }
 
+pub async fn download_item_images(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<i64>,
+) -> Result<Json<ImageDownloadSummary>, StatusCode> {
+    let mut item = {
+        let mut db = state
+            .db
+            .lock()
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        let repo = MediaRepository::new(db.connection_mut());
+        repo.get(id)
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+            .ok_or(StatusCode::NOT_FOUND)?
+    };
+
+    let downloader = ImageDownloader::new(state.image_config.clone());
+    let mut summary = ImageDownloadSummary {
+        downloaded: 0,
+        failed: Vec::new(),
+    };
+    for index in 0..item.images.len() {
+        let image = item.images[index].clone();
+        if image.source_url.is_none() || image.local_path.is_file() {
+            continue;
+        }
+        if !is_allowed_path(&state, &image.local_path) {
+            summary.failed.push(format!(
+                "{}: target path is outside the media directories",
+                image.kind
+            ));
+            continue;
+        }
+        match downloader.download_one(&image).await {
+            Ok(path) => {
+                item.images[index].local_path = path;
+                summary.downloaded += 1;
+            }
+            Err(error) => summary.failed.push(format!("{}: {error}", image.kind)),
+        }
+    }
+
+    {
+        let mut db = state
+            .db
+            .lock()
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        let mut repo = MediaRepository::new(db.connection_mut());
+        repo.upsert(&item).map_err(|error| {
+            tracing::error!(%error, "saving downloaded artwork failed");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    }
+    Ok(Json(summary))
+}
+
 fn run_scan(
     state: &Arc<AppState>,
     roots: &[ScanRoot],
@@ -321,6 +387,7 @@ mod tests {
                 recursive: true,
             }],
             PathBuf::from("/tmp"),
+            mediaelch_image::ImageConfig::default(),
         ))
     }
 

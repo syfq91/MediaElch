@@ -10,6 +10,7 @@ rust-version.workspace = true
 mediaelch-core.workspace = true
 mediaelch-db.workspace = true
 mediaelch-fs.workspace = true
+mediaelch-image.workspace = true
 mediaelch-nfo.workspace = true
 mediaelch-web.workspace = true
 askama.workspace = true

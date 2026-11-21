@@ -53,6 +53,10 @@ async fn run() -> Result<(), Box<dyn Error>> {
         VERSION,
         roots_from_config(&config),
         config.library.data_dir.clone(),
+        mediaelch_image::ImageConfig {
+            max_poster_width: config.images.max_poster_width,
+            max_backdrop_width: config.images.max_backdrop_width,
+        },
     ));
     let listener = tokio::net::TcpListener::bind(config.bind_addr()?).await?;
     tracing::info!(address = %listener.local_addr()?, "HTTP server listening");

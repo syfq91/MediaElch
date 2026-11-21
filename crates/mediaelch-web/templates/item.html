@@ -31,6 +31,9 @@
 
   {% if !item.images.is_empty() %}
   <h2>Artwork</h2>
+  <button type="button" hx-post="/api/items/{{ item.id }}/images/download"
+          hx-target="#artwork-status" hx-swap="innerHTML">Download missing artwork</button>
+  <span id="artwork-status" aria-live="polite"></span>
   <div class="thumbs">
     {% for image in item.images %}
     <img src="/api/items/{{ item.id }}/images/{{ image.kind }}" alt="{{ image.kind }}" loading="lazy">
