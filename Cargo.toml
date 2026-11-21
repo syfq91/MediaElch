@@ -42,6 +42,7 @@ async-trait = "0.1"
 futures-core = "0.3"
 argon2 = "0.5"
 password-hash = { version = "0.5", features = ["getrandom"] }
+axum-server = { version = "0.7", features = ["tls-rustls"] }
 urlencoding = "2"
 image = "0.25"
 clap = { version = "4", features = ["derive", "env"] }

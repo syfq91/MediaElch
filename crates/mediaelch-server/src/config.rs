@@ -27,6 +27,8 @@ pub enum ConfigError {
     EmptyDataDir,
     #[error("auth is enabled but auth.password_hash is not set")]
     MissingPasswordHash,
+    #[error("TLS requires both server.tls_cert and server.tls_key")]
+    IncompleteTlsConfig,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -47,6 +49,8 @@ pub struct Config {
 pub struct ServerConfig {
     pub bind: String,
     pub base_url: Option<String>,
+    pub tls_cert: Option<PathBuf>,
+    pub tls_key: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -101,6 +105,8 @@ impl Default for ServerConfig {
         Self {
             bind: "127.0.0.1:8080".to_owned(),
             base_url: None,
+            tls_cert: None,
+            tls_key: None,
         }
     }
 }
@@ -190,6 +196,9 @@ impl Config {
         if self.library.data_dir.as_os_str().is_empty() {
             return Err(ConfigError::EmptyDataDir);
         }
+        if self.server.tls_cert.is_some() != self.server.tls_key.is_some() {
+            return Err(ConfigError::IncompleteTlsConfig);
+        }
         if self.auth.enabled
             && self
                 .auth
@@ -246,12 +255,13 @@ impl Config {
             .map(|p| p.display().to_string())
             .unwrap_or_else(|| "<defaults>".to_owned());
         format!(
-            "config file: {path}\nbind: {}\ndata dir: {}\nmedia directories: {}\nlog level: {} (json: {})\nauthentication: {}\nTMDB key: {}\nfanart.tv key: {}",
+            "config file: {path}\nbind: {}\ndata dir: {}\nmedia directories: {}\nlog level: {} (json: {})\nTLS: {}\nauthentication: {}\nTMDB key: {}\nfanart.tv key: {}",
             self.server.bind,
             self.library.data_dir.display(),
             self.library.media_directories.len(),
             self.logging.level,
             self.logging.json,
+            if self.server.tls_cert.is_some() { "enabled" } else { "disabled" },
             if self.auth.enabled { "enabled" } else { "disabled" },
             redact(&self.scrapers.tmdb_api_key),
             redact(&self.scrapers.fanarttv_api_key),
@@ -357,6 +367,14 @@ mod tests {
     fn warnings_report_missing_setup() {
         let warnings = Config::default().warnings();
         assert_eq!(warnings.len(), 4);
+    }
+
+    #[test]
+    fn tls_requires_certificate_and_key() {
+        let config = Config::from_figment(Figment::from(Toml::string(
+            "[server]\ntls_cert = \"/tmp/cert.pem\"\n",
+        )));
+        assert!(matches!(config, Err(ConfigError::IncompleteTlsConfig)));
     }
 
     #[test]

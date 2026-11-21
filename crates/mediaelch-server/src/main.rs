@@ -79,12 +79,29 @@ async fn run() -> Result<(), Box<dyn Error>> {
             config.auth.password_hash.clone(),
         )),
     ));
-    let listener = tokio::net::TcpListener::bind(config.bind_addr()?).await?;
-    tracing::info!(address = %listener.local_addr()?, "HTTP server listening");
+    let router = app::router(state);
+    let address = config.bind_addr()?;
 
-    axum::serve(listener, app::router(state))
-        .with_graceful_shutdown(shutdown_signal())
-        .await?;
+    if let (Some(cert), Some(key)) = (&config.server.tls_cert, &config.server.tls_key) {
+        let tls = axum_server::tls_rustls::RustlsConfig::from_pem_file(cert, key).await?;
+        let handle = axum_server::Handle::new();
+        let shutdown = handle.clone();
+        tokio::spawn(async move {
+            let _ = tokio::signal::ctrl_c().await;
+            shutdown.graceful_shutdown(Some(std::time::Duration::from_secs(5)));
+        });
+        tracing::info!(%address, "HTTPS server listening");
+        axum_server::bind_rustls(address, tls)
+            .handle(handle)
+            .serve(router.into_make_service())
+            .await?;
+    } else {
+        let listener = tokio::net::TcpListener::bind(address).await?;
+        tracing::info!(address = %listener.local_addr()?, "HTTP server listening");
+        axum::serve(listener, router)
+            .with_graceful_shutdown(shutdown_signal())
+            .await?;
+    }
 
     Ok(())
 }

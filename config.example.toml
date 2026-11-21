@@ -7,6 +7,10 @@
 [server]
 bind = "127.0.0.1:8080"
 # base_url = "https://mediaelch.example.com"
+# Optional built-in HTTPS. Both paths must be set together, or use a
+# reverse proxy that terminates TLS instead.
+# tls_cert = "/etc/mediaelch/tls/cert.pem"
+# tls_key = "/etc/mediaelch/tls/key.pem"
 
 [library]
 # The new database lives here; the legacy MediaElch.sqlite is never opened.
