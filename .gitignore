@@ -14,6 +14,7 @@
 !/README.md
 !/CHANGELOG.md
 !/CONTRIBUTING.md
+!/rewrite-plan.md
 
 CMakeLists.txt.user*
 CMakeUserPresets.json
@@ -79,6 +80,9 @@ package-lock.json
 # Precompiled Headers
 *.gch
 *.pch
+
+# Rust
+/target/
 
 # Compiled Dynamic libraries
 *.so

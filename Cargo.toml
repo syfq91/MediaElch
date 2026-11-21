@@ -1,0 +1,29 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/mediaelch-core",
+    "crates/mediaelch-db",
+    "crates/mediaelch-fs",
+    "crates/mediaelch-nfo",
+    "crates/mediaelch-scrape",
+    "crates/mediaelch-image",
+    "crates/mediaelch-renamer",
+    "crates/mediaelch-export",
+    "crates/mediaelch-web",
+    "crates/mediaelch-server",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "LGPL-3.0-or-later"
+repository = "https://github.com/Komet/MediaElch"
+rust-version = "1.85"
+
+# Entries are added as the corresponding phase starts using them.
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+tracing = "0.1"
+rusqlite = { version = "0.32", features = ["bundled"] }
+tempfile = "3"
