@@ -1,0 +1,13 @@
+{
+  "id": 1,
+  "name": "Under the Dome",
+  "premiered": "2013-06-09",
+  "summary": "<p>A small town is sealed off.</p>",
+  "genres": ["Drama", "Science-Fiction"],
+  "status": "Ended",
+  "network": {"name": "CBS"},
+  "rating": {"average": 7.5},
+  "image": {"medium": "http://static.tvmaze.com/medium.jpg", "original": "http://static.tvmaze.com/original.jpg"},
+  "externals": {"imdb": "tt1553656", "thetvdb": 259640},
+  "webChannel": null
+}
