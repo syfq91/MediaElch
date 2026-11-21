@@ -57,6 +57,11 @@ impl Database {
         conn.pragma_update(None, "journal_mode", "WAL")?;
         conn.pragma_update(None, "foreign_keys", "ON")?;
         conn.pragma_update(None, "busy_timeout", 5000)?;
+        // WAL + NORMAL is durable enough for a rebuildable metadata cache and
+        // avoids an fsync on every item during a full scan.
+        conn.pragma_update(None, "synchronous", "NORMAL")?;
+        conn.pragma_update(None, "temp_store", "MEMORY")?;
+        conn.pragma_update(None, "cache_size", -32_000)?;
         migrations::migrate(&mut conn)?;
         Ok(Self { conn })
     }

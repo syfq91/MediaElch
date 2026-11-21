@@ -282,25 +282,27 @@ fn run_scan(
 
     let mut db = state.db.lock().map_err(|error| error.to_string())?;
     let mut repo = MediaRepository::new(db.connection_mut());
-    let mut episodes = Vec::new();
-    let mut processed = 0;
 
-    for mut item in scanned.items {
+    let mut items = scanned.items;
+    for item in &mut items {
         if let Some(nfo_path) = item.nfo_path.clone() {
             match NfoReader::read(&nfo_path, item.kind) {
                 Ok(draft) => item.apply_nfo(&draft),
                 Err(error) => tracing::warn!(%error, "could not read NFO; using filename data"),
             }
         }
-        let id = repo.upsert(&item).map_err(|error| error.to_string())?;
-        if item.kind == MediaKind::Episode {
-            episodes.push((id, item.directory.clone()));
-        }
-        processed += 1;
-        if processed % 10 == 0 {
-            set_job(state, job_id, "running", processed, total, None);
-        }
     }
+    set_job(state, job_id, "running", 0, total, None);
+    let ids = repo
+        .upsert_many(&items)
+        .map_err(|error| error.to_string())?;
+    let processed = ids.len();
+    let episodes: Vec<(i64, std::path::PathBuf)> = items
+        .iter()
+        .zip(ids)
+        .filter(|(item, _)| item.kind == MediaKind::Episode)
+        .map(|(item, id)| (id, item.directory.clone()))
+        .collect();
 
     for (episode_id, directory) in episodes {
         if let Some(show_id) = repo

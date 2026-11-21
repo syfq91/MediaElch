@@ -33,6 +33,27 @@ impl<'a> MediaRepository<'a> {
     /// atomic: a failed child insert rolls back the whole item.
     pub fn upsert(&mut self, item: &MediaItem) -> Result<i64, DbError> {
         let transaction = self.conn.transaction()?;
+        let id = Self::upsert_in_transaction(&transaction, item)?;
+        transaction.commit()?;
+        Ok(id)
+    }
+
+    /// Upsert all items in a single transaction. Used by full rescans to avoid
+    /// one fsync per item.
+    pub fn upsert_many(&mut self, items: &[MediaItem]) -> Result<Vec<i64>, DbError> {
+        let transaction = self.conn.transaction()?;
+        let mut ids = Vec::with_capacity(items.len());
+        for item in items {
+            ids.push(Self::upsert_in_transaction(&transaction, item)?);
+        }
+        transaction.commit()?;
+        Ok(ids)
+    }
+
+    fn upsert_in_transaction(
+        transaction: &rusqlite::Transaction<'_>,
+        item: &MediaItem,
+    ) -> Result<i64, DbError> {
         let primary = item.primary_rating();
 
         transaction.execute(
@@ -167,7 +188,6 @@ impl<'a> MediaRepository<'a> {
             )?;
         }
 
-        transaction.commit()?;
         Ok(id)
     }
 
@@ -563,6 +583,30 @@ mod tests {
         assert_eq!(repo.list(None, Some("alien"), 50, 0).unwrap().len(), 1);
         assert_eq!(repo.count(Some(MediaKind::Episode), None).unwrap(), 0);
         assert_eq!(repo.count(None, Some("missing")).unwrap(), 0);
+    }
+
+    #[test]
+    fn bulk_upsert_persists_large_libraries() {
+        let mut db = Database::open_in_memory().unwrap();
+        let mut repo = MediaRepository::new(db.connection_mut());
+        let items: Vec<MediaItem> = (0..500)
+            .map(|index| {
+                let mut item = sample_item(&format!("Movie {index}"));
+                item.primary_file = PathBuf::from(format!("/movies/{index}/movie.mkv"));
+                item.files[0].path = item.primary_file.clone();
+                item
+            })
+            .collect();
+
+        let ids = repo.upsert_many(&items).unwrap();
+
+        assert_eq!(ids.len(), 500);
+        assert_eq!(repo.count(None, None).unwrap(), 500);
+        assert_eq!(repo.get(ids[0]).unwrap().unwrap().title, "Movie 0");
+        assert_eq!(
+            repo.get(*ids.last().unwrap()).unwrap().unwrap().title,
+            "Movie 499"
+        );
     }
 
     #[test]
