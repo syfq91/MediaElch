@@ -1,0 +1,36 @@
+# Example configuration for the headless MediaElch server.
+# Copy to $XDG_CONFIG_HOME/mediaelch/config.toml or pass --config <path>.
+# Environment overrides use MEDIAELCH_ prefixes and __ for nesting, e.g.
+#   MEDIAELCH_SERVER__BIND=0.0.0.0:8080
+#   MEDIAELCH_SCRAPERS__TMDB_API_KEY=...
+
+[server]
+bind = "127.0.0.1:8080"
+# base_url = "https://mediaelch.example.com"
+
+[library]
+# The new database lives here; the legacy MediaElch.sqlite is never opened.
+data_dir = "./data"
+# Directories that contain movies, TV shows or concerts.
+media_directories = []
+# 0 disables periodic rescans.
+scan_interval_minutes = 0
+# NFO files are only written on explicit request unless this is enabled.
+write_nfo_automatically = false
+
+[scrapers]
+# Obtain your own API keys; never commit them.
+tmdb_api_key = ""
+fanarttv_api_key = ""
+fanarttv_client_key = ""
+language = "en-US"
+# proxy = "http://user:password@proxy:8080"
+proxy_bypass_local = true
+
+[images]
+max_backdrop_width = 1920
+max_poster_width = 1000
+
+[logging]
+level = "info"
+json = false

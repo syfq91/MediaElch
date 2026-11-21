@@ -7,3 +7,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+clap.workspace = true
+figment.workspace = true
+serde.workspace = true
+thiserror.workspace = true
