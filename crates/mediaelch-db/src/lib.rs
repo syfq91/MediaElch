@@ -4,6 +4,7 @@
 //! `MediaElch.sqlite` cache of the Qt application is never opened.
 
 pub mod migrations;
+pub mod repository;
 
 use std::path::Path;
 
@@ -62,6 +63,10 @@ impl Database {
 
     pub fn connection(&self) -> &rusqlite::Connection {
         &self.conn
+    }
+
+    pub fn connection_mut(&mut self) -> &mut rusqlite::Connection {
+        &mut self.conn
     }
 }
 

@@ -29,6 +29,11 @@ pub static MIGRATIONS: &[Migration] = &[
         name: "scrape_settings_fts",
         sql: include_str!("../migrations/002_scrape_settings_fts.sql"),
     },
+    Migration {
+        version: 3,
+        name: "ratings",
+        sql: include_str!("../migrations/003_ratings.sql"),
+    },
 ];
 
 /// Apply every migration that has not been recorded yet. Each migration runs

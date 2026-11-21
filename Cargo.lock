@@ -525,6 +525,7 @@ dependencies = [
 name = "mediaelch-db"
 version = "0.1.0"
 dependencies = [
+ "mediaelch-core",
  "rusqlite",
  "tempfile",
  "thiserror",

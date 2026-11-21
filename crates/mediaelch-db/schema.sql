@@ -10,6 +10,8 @@ CREATE INDEX ix_item_kind ON media_item(kind);
 CREATE INDEX ix_item_parent ON media_item(parent_id);
 -- index ix_item_title
 CREATE INDEX ix_item_title ON media_item(sort_title);
+-- index ix_rating_item
+CREATE INDEX ix_rating_item ON rating(item_id);
 -- index ix_stream_file
 CREATE INDEX ix_stream_file ON stream_detail(file_id);
 -- table credit
@@ -94,6 +96,16 @@ CREATE TABLE media_tag (
     kind TEXT NOT NULL,
     value TEXT NOT NULL,
     PRIMARY KEY (item_id, kind, value)
+);
+-- table rating
+CREATE TABLE rating (
+    id INTEGER PRIMARY KEY,
+    item_id INTEGER NOT NULL REFERENCES media_item(id) ON DELETE CASCADE,
+    source TEXT NOT NULL,
+    value REAL NOT NULL,
+    votes INTEGER NOT NULL DEFAULT 0,
+    max_value REAL NOT NULL DEFAULT 10,
+    is_default INTEGER NOT NULL DEFAULT 0
 );
 -- table scrape_state
 CREATE TABLE scrape_state (
