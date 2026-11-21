@@ -57,6 +57,7 @@ pub struct SearchQuery {
 #[derive(Debug, Clone, PartialEq)]
 pub struct SearchHit {
     pub external_id: ExternalId,
+    pub kind: Option<MediaKind>,
     pub title: String,
     pub year: Option<i32>,
     pub overview: Option<String>,
@@ -95,6 +96,7 @@ pub trait MetadataScraper: Send + Sync {
     async fn search(&self, query: &SearchQuery) -> Result<Vec<SearchHit>, ScrapeError>;
     async fn load(
         &self,
+        kind: MediaKind,
         id: &ExternalId,
         details: &DetailSet,
         language: &str,

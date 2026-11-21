@@ -1,0 +1,21 @@
+{
+  "id": 1396,
+  "name": "Breaking Bad",
+  "original_name": "Breaking Bad",
+  "overview": "A chemistry teacher turns to crime.",
+  "first_air_date": "2008-01-20",
+  "episode_run_time": [49],
+  "vote_average": 8.9,
+  "vote_count": 12000,
+  "genres": [{"id": 18, "name": "Drama"}, {"id": 80, "name": "Crime"}],
+  "production_countries": [{"name": "United States of America"}],
+  "external_ids": {"imdb_id": "tt0903747", "tvdb_id": 81189},
+  "poster_path": "/tvposter.jpg",
+  "backdrop_path": "/tvbackdrop.jpg",
+  "content_ratings": {
+    "results": [{"iso_3166_1": "US", "rating": "TV-MA"}]
+  },
+  "credits": {
+    "cast": [{"name": "Bryan Cranston", "character": "Walter White", "order": 0}]
+  }
+}

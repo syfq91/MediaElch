@@ -1,0 +1,7 @@
+{
+  "page": 1,
+  "results": [
+    {"id": 348, "title": "Alien", "release_date": "1979-05-25", "media_type": "movie", "overview": "A crew encounters a hostile alien."},
+    {"id": 1396, "name": "Breaking Bad", "first_air_date": "2008-01-20", "media_type": "tv", "overview": "A chemistry teacher turns to crime."}
+  ]
+}

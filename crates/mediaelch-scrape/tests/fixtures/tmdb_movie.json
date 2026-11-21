@@ -1,0 +1,27 @@
+{
+  "id": 348,
+  "title": "Alien",
+  "original_title": "Alien",
+  "overview": "A crew encounters a hostile alien.",
+  "release_date": "1979-05-25",
+  "runtime": 117,
+  "vote_average": 8.1,
+  "vote_count": 7653,
+  "genres": [{"id": 27, "name": "Horror"}, {"id": 878, "name": "Science Fiction"}],
+  "production_countries": [{"name": "United States of America"}],
+  "production_companies": [{"name": "20th Century Fox"}],
+  "external_ids": {"imdb_id": "tt0078748"},
+  "poster_path": "/abc.jpg",
+  "backdrop_path": "/def.jpg",
+  "credits": {
+    "cast": [{"name": "Sigourney Weaver", "character": "Ripley", "order": 0, "profile_path": "/p.jpg"}],
+    "crew": [{"name": "Ridley Scott", "job": "Director"}]
+  },
+  "release_dates": {
+    "results": [{"iso_3166_1": "US", "release_dates": [{"certification": "R"}]}]
+  },
+  "images": {
+    "posters": [{"file_path": "/abc.jpg", "iso_639_1": "en"}],
+    "backdrops": [{"file_path": "/def.jpg"}]
+  }
+}
