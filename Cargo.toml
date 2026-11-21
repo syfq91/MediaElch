@@ -40,6 +40,8 @@ askama = "0.13"
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
 async-trait = "0.1"
 futures-core = "0.3"
+argon2 = "0.5"
+password-hash = { version = "0.5", features = ["getrandom"] }
 urlencoding = "2"
 image = "0.25"
 clap = { version = "4", features = ["derive", "env"] }

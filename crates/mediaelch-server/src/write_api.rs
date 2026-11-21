@@ -270,6 +270,7 @@ mod tests {
             Arc::new(crate::scrape_api::ScrapeRegistry::new(
                 mediaelch_scrape::ScrapeConfig::default(),
             )),
+            Arc::new(crate::auth::AuthState::new(false, None)),
         ))
     }
 

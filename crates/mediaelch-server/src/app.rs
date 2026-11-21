@@ -14,6 +14,7 @@ use mediaelch_image::ImageConfig;
 use serde::{Deserialize, Serialize};
 
 use crate::api::{self, ItemQuery, ScanJob};
+use crate::auth::AuthState;
 use crate::scrape_api::{ScrapeJob, ScrapeRegistry};
 use crate::ui;
 use crate::write_api;
@@ -30,6 +31,7 @@ pub struct AppState {
     pub scrapers: Arc<ScrapeRegistry>,
     pub scrape_jobs: Arc<Mutex<HashMap<String, ScrapeJob>>>,
     pub scrape_counter: Arc<Mutex<u64>>,
+    pub auth: Arc<AuthState>,
 }
 
 impl AppState {
@@ -40,6 +42,7 @@ impl AppState {
         data_dir: PathBuf,
         image_config: ImageConfig,
         scrapers: Arc<ScrapeRegistry>,
+        auth: Arc<AuthState>,
     ) -> Self {
         Self {
             db: Arc::new(Mutex::new(db)),
@@ -52,6 +55,7 @@ impl AppState {
             scrapers,
             scrape_jobs: Arc::new(Mutex::new(HashMap::new())),
             scrape_counter: Arc::new(Mutex::new(0)),
+            auth,
         }
     }
 }
@@ -72,6 +76,7 @@ struct VersionInfo {
 }
 
 pub fn router(state: Arc<AppState>) -> Router {
+    let middleware_state = Arc::clone(&state);
     Router::new()
         .route("/", get(root))
         .route("/healthz", get(healthz))
@@ -80,6 +85,11 @@ pub fn router(state: Arc<AppState>) -> Router {
         .merge(write_api::routes())
         .merge(crate::scrape_api::routes())
         .merge(ui::routes())
+        .layer(axum::middleware::from_fn_with_state(
+            middleware_state,
+            crate::auth::auth_middleware,
+        ))
+        .merge(crate::auth::routes())
         .with_state(state)
 }
 
@@ -135,6 +145,7 @@ mod tests {
             Arc::new(ScrapeRegistry::new(
                 mediaelch_scrape::ScrapeConfig::default(),
             )),
+            Arc::new(AuthState::new(false, None)),
         );
         router(Arc::new(state))
     }

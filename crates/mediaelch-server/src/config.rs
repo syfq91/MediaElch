@@ -25,6 +25,8 @@ pub enum ConfigError {
     InvalidLogLevel { value: String },
     #[error("data_dir must not be empty")]
     EmptyDataDir,
+    #[error("auth is enabled but auth.password_hash is not set")]
+    MissingPasswordHash,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -35,6 +37,7 @@ pub struct Config {
     pub scrapers: ScraperConfig,
     pub images: ImageConfig,
     pub logging: LoggingConfig,
+    pub auth: AuthConfig,
     #[serde(skip)]
     pub config_path: Option<PathBuf>,
 }
@@ -71,6 +74,13 @@ pub struct ScraperConfig {
 pub struct ImageConfig {
     pub max_backdrop_width: u32,
     pub max_poster_width: u32,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AuthConfig {
+    pub enabled: bool,
+    pub password_hash: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -180,6 +190,15 @@ impl Config {
         if self.library.data_dir.as_os_str().is_empty() {
             return Err(ConfigError::EmptyDataDir);
         }
+        if self.auth.enabled
+            && self
+                .auth
+                .password_hash
+                .as_deref()
+                .is_none_or(|hash| hash.is_empty())
+        {
+            return Err(ConfigError::MissingPasswordHash);
+        }
         Ok(())
     }
 
@@ -210,6 +229,12 @@ impl Config {
                     .to_owned(),
             );
         }
+        if !self.auth.enabled {
+            warnings.push(
+                "authentication is disabled; do not expose this server to an untrusted network"
+                    .to_owned(),
+            );
+        }
         warnings
     }
 
@@ -221,12 +246,13 @@ impl Config {
             .map(|p| p.display().to_string())
             .unwrap_or_else(|| "<defaults>".to_owned());
         format!(
-            "config file: {path}\nbind: {}\ndata dir: {}\nmedia directories: {}\nlog level: {} (json: {})\nTMDB key: {}\nfanart.tv key: {}",
+            "config file: {path}\nbind: {}\ndata dir: {}\nmedia directories: {}\nlog level: {} (json: {})\nauthentication: {}\nTMDB key: {}\nfanart.tv key: {}",
             self.server.bind,
             self.library.data_dir.display(),
             self.library.media_directories.len(),
             self.logging.level,
             self.logging.json,
+            if self.auth.enabled { "enabled" } else { "disabled" },
             redact(&self.scrapers.tmdb_api_key),
             redact(&self.scrapers.fanarttv_api_key),
         )
@@ -330,6 +356,12 @@ mod tests {
     #[test]
     fn warnings_report_missing_setup() {
         let warnings = Config::default().warnings();
-        assert_eq!(warnings.len(), 3);
+        assert_eq!(warnings.len(), 4);
+    }
+
+    #[test]
+    fn enabled_auth_requires_a_password_hash() {
+        let config = Config::from_figment(Figment::from(Toml::string("[auth]\nenabled = true\n")));
+        assert!(matches!(config, Err(ConfigError::MissingPasswordHash)));
     }
 }

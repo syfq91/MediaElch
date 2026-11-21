@@ -34,3 +34,9 @@ max_poster_width = 1000
 [logging]
 level = "info"
 json = false
+
+[auth]
+# Enable this before exposing the server beyond localhost.
+enabled = false
+# Generate with: mediaelch-server --hash-password 'your-password'
+password_hash = ""

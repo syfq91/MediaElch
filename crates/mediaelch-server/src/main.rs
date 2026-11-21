@@ -2,6 +2,7 @@
 
 mod api;
 mod app;
+mod auth;
 mod cli;
 mod config;
 mod scrape_api;
@@ -34,6 +35,10 @@ fn main() -> ExitCode {
 #[tokio::main]
 async fn run() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
+    if let Some(password) = &cli.hash_password {
+        println!("{}", auth::AuthState::hash_password(password)?);
+        return Ok(());
+    }
     let config = Config::load(&cli)?;
 
     if cli.check {
@@ -68,6 +73,10 @@ async fn run() -> Result<(), Box<dyn Error>> {
                 proxy: config.scrapers.proxy.clone(),
                 ..mediaelch_scrape::ScrapeConfig::default()
             },
+        )),
+        Arc::new(auth::AuthState::new(
+            config.auth.enabled,
+            config.auth.password_hash.clone(),
         )),
     ));
     let listener = tokio::net::TcpListener::bind(config.bind_addr()?).await?;

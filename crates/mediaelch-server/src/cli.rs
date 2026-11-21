@@ -30,4 +30,8 @@ pub struct Cli {
     /// Validate the configuration and exit without starting the server.
     #[arg(long)]
     pub check: bool,
+
+    /// Print an Argon2id hash for the given password and exit.
+    #[arg(long, value_name = "PASSWORD")]
+    pub hash_password: Option<String>,
 }
