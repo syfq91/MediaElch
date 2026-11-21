@@ -7,3 +7,9 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+mediaelch-core.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

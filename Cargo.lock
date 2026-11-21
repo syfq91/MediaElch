@@ -1254,6 +1254,12 @@ dependencies = [
 [[package]]
 name = "mediaelch-renamer"
 version = "0.1.0"
+dependencies = [
+ "mediaelch-core",
+ "serde",
+ "tempfile",
+ "thiserror",
+]
 
 [[package]]
 name = "mediaelch-scrape"
