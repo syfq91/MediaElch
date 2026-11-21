@@ -1,0 +1,55 @@
+name: Rust (headless server)
+
+on:
+  push:
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "crates/**"
+      - ".github/workflows/rust.yml"
+      - "config.example.toml"
+  pull_request:
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "crates/**"
+      - ".github/workflows/rust.yml"
+      - "config.example.toml"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  verify:
+    name: Format, lint, test and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Lint with Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - name: Run tests
+        run: cargo test --workspace --locked
+
+      - name: Build release binary
+        run: cargo build --release --locked -p mediaelch-server
+
+      - name: Verify the binary is headless
+        run: |
+          if ldd target/release/mediaelch-server | grep -Eqi 'libQt|xcb|x11'; then
+            echo "The server binary links against GUI libraries" >&2
+            exit 1
+          fi
+
+      - name: Validate the example configuration
+        run: ./target/release/mediaelch-server --check --config config.example.toml
