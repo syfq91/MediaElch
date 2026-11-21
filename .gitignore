@@ -17,6 +17,7 @@
 !/CONTRIBUTING.md
 !/rewrite-plan.md
 !/deploy/README.md
+!/deploy/*.md
 
 CMakeLists.txt.user*
 CMakeUserPresets.json

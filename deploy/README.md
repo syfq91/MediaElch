@@ -1,42 +1,87 @@
-# Deployment examples (Phase 0)
+# Deployment guide (headless server)
 
-These files are examples for the headless Rust server. They are intentionally
-minimal; production hardening (TLS, backups, monitoring) is part of Phase 4.
+The rewrite is a single Rust binary with no Qt/X11 runtime. Provide a TOML
+configuration file, a writable data directory and access to your media files.
 
-## Docker
+## Configuration
+
+Start from `config.example.toml`. Important sections:
+
+- `[server] bind` — `127.0.0.1:8080` by default. Set `tls_cert` + `tls_key`
+  together to let the binary terminate HTTPS itself, or leave them unset and
+  terminate TLS at a reverse proxy.
+- `[library] data_dir` — holds `mediaelch.sqlite` and `exports/`. Use a
+  different directory from the legacy Qt application's data; the old cache is
+  never opened.
+- `[library] media_directories` — scan roots. A directory name containing
+  `movie`, `show`/`tv`, or `concert` is classified accordingly; otherwise the
+  scanner infers from filenames.
+- `[scrapers]` — supply your own TMDB and fanart.tv API keys. Missing keys
+  produce a clear job error, not a crash.
+- `[auth] enabled = true` with a `password_hash` — **enable this before
+  exposing the server to any untrusted network.**
+
+Generate a hash:
 
 ```sh
-cp config.example.toml config.toml
-docker build -t mediaelch-server:local .
-docker run -d --name mediaelch -p 8080:8080 \
-  -v mediaelch-data:/var/lib/mediaelch \
-  -v /path/to/media:/media:ro \
-  -v "$PWD/config.toml:/etc/mediaelch/config.toml:ro" \
-  mediaelch-server:local
-curl http://127.0.0.1:8080/healthz
+mediaelch-server --hash-password 'choose-a-password'
 ```
 
-The image contains only the Rust binary plus CA certificates and timezone data.
-It needs no Qt, X11 or display server.
+Validate a config without starting the server:
+
+```sh
+mediaelch-server --check --config /etc/mediaelch/config.toml
+```
+
+Environment overrides use `MEDIAELCH_` prefixes with `__` for nesting, e.g.
+`MEDIAELCH_SERVER__BIND=0.0.0.0:8080`,
+`MEDIAELCH_SCRAPERS__TMDB_API_KEY=...`.
+
+## Reverse proxy with TLS (recommended)
+
+Bind the server to loopback and let a proxy terminate TLS.
+
+Caddy:
+
+```caddyfile
+mediaelch.example.com {
+    reverse_proxy 127.0.0.1:8080
+}
+```
+
+nginx:
+
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name mediaelch.example.com;
+    ssl_certificate     /etc/letsencrypt/live/mediaelch.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/mediaelch.example.com/privkey.pem;
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+The SSE endpoint (`/api/scrape/events`) needs proxy buffering disabled; nginx
+users should add `proxy_buffering off;` for that location.
 
 ## systemd
 
-```sh
-useradd --system --create-home mediaelch
-install -d -o mediaelch -g mediaelch /var/lib/mediaelch /etc/mediaelch
-install -m 0640 config.toml /etc/mediaelch/config.toml
-install -m 0755 target/release/mediaelch-server /usr/local/bin/mediaelch-server
-install -m 0644 deploy/mediaelch.service /etc/systemd/system/mediaelch.service
-systemctl daemon-reload
-systemctl enable --now mediaelch
-```
+See `deploy/mediaelch.service`. It runs as `mediaelch`, uses a hardened unit
+and reads `/etc/mediaelch/config.toml`. If media lives under `/home`, adjust
+`ProtectHome` / `ReadWritePaths`.
 
-If your media directories are under `/home`, adjust `ProtectHome` and
-`ReadWritePaths` in the unit file.
+## Docker
 
-## Configuration precedence
+`docker build -t mediaelch-server:local .` then mount a config file, a data
+volume and media directories read-only. See the comment block at the top of
+the root `Dockerfile`.
 
-Built-in defaults < TOML file < `MEDIAELCH_*` environment variables < CLI flags.
-Nested settings use `__` in environment variables, for example
-`MEDIAELCH_SERVER__BIND=0.0.0.0:8080`.
-Validate a configuration without starting the server with `--check`.
+## Backups and cutover
+
+See [backup.md](backup.md) for backup/restore commands and
+[cutover.md](cutover.md) for the retirement checklist for the old Qt app.
