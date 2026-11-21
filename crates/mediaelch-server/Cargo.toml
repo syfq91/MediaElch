@@ -9,6 +9,8 @@ rust-version.workspace = true
 [dependencies]
 mediaelch-core.workspace = true
 mediaelch-db.workspace = true
+mediaelch-export.workspace = true
+mediaelch-renamer.workspace = true
 mediaelch-fs.workspace = true
 mediaelch-image.workspace = true
 mediaelch-nfo.workspace = true

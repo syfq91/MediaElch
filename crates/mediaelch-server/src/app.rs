@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::api::{self, ItemQuery, ScanJob};
 use crate::ui;
+use crate::write_api;
 
 /// State shared by every request handler.
 pub struct AppState {
@@ -68,6 +69,7 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/healthz", get(healthz))
         .route("/api/version", get(version))
         .merge(api::routes())
+        .merge(write_api::routes())
         .merge(ui::routes())
         .with_state(state)
 }

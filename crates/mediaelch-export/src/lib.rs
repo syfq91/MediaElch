@@ -32,6 +32,12 @@ impl ExportFormat {
     }
 }
 
+/// Minimal built-in HTML theme used when no custom theme is supplied.
+pub const DEFAULT_HTML_TEMPLATE: &str =
+    "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">\
+<title>MediaElch export</title></head><body><h1>MediaElch export</h1><ul>{{#items}}\
+<li><strong>{{ title }}</strong> ({{ year }}) — {{ overview }}</li>{{/items}}</ul></body></html>";
+
 /// Build a CSV document with RFC 4180-style quoting.
 pub fn to_csv(items: &[MediaItem], separator: char) -> String {
     let columns = [

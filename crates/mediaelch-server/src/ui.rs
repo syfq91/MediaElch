@@ -3,17 +3,20 @@
 use std::sync::Arc;
 
 use askama::Template;
-use axum::extract::{Path, Query, State};
+use axum::extract::{Form, Path, Query, State};
 use axum::http::{header, StatusCode};
 use axum::response::{Html, IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::Router;
 use mediaelch_core::{ImageKind, MediaItem, MediaKind};
 use mediaelch_db::repository::MediaRepository;
-use mediaelch_web::{ItemCard, ItemView, LibraryView, ScanJobView, ScanStatusView, APP_CSS};
+use mediaelch_web::{
+    ItemCard, ItemView, LibraryView, ScanJobView, ScanStatusView, ToolsView, APP_CSS,
+};
 
 use crate::api::{self, ItemQuery};
 use crate::app::AppState;
+use crate::write_api::{self, ExportRequest};
 
 pub fn routes() -> Router<Arc<AppState>> {
     Router::new()
@@ -21,6 +24,8 @@ pub fn routes() -> Router<Arc<AppState>> {
         .route("/ui/items/{id}", get(item_page))
         .route("/ui/scan", post(ui_scan))
         .route("/ui/scan/{job_id}", get(ui_scan_status))
+        .route("/ui/tools", get(tools_page))
+        .route("/ui/export", post(export_form))
         .route("/static/app.css", get(css))
 }
 
@@ -82,6 +87,24 @@ pub async fn ui_scan_status(
         .cloned()
         .ok_or(StatusCode::NOT_FOUND)?;
     render_job(&job)
+}
+
+pub async fn tools_page() -> Result<Html<String>, StatusCode> {
+    ToolsView
+        .render()
+        .map(Html)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+}
+
+pub async fn export_form(
+    State(state): State<Arc<AppState>>,
+    Form(request): Form<ExportRequest>,
+) -> Result<Html<String>, StatusCode> {
+    let result = write_api::create_export_file(&state, &request)?;
+    Ok(Html(format!(
+        "<a href=\"/api/export/{}\">Download {}</a> ({} items)",
+        result.filename, result.filename, result.items
+    )))
 }
 
 pub async fn css() -> Response {

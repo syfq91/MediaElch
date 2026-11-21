@@ -38,6 +38,10 @@ pub struct ScanJobView {
 }
 
 #[derive(Debug, Template)]
+#[template(path = "tools.html")]
+pub struct ToolsView;
+
+#[derive(Debug, Template)]
 #[template(path = "scan_status.html")]
 pub struct ScanStatusView {
     pub job: ScanJobView,

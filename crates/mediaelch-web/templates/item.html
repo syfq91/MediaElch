@@ -4,6 +4,9 @@
 <article class="detail">
   <a href="/" hx-get="/ui/library" hx-target="#main" hx-swap="innerHTML">← Library</a>
   <h1>{{ item.title }}</h1>
+  <button type="button" hx-post="/api/items/{{ item.id }}/nfo"
+          hx-target="#nfo-status" hx-swap="innerHTML">Save NFO</button>
+  <span id="nfo-status" aria-live="polite"></span>
   <p class="meta">{{ item.kind }}
     {% match item.year %}{% when Some with (year) %} · {{ year }}{% when None %}{% endmatch %}
     {% match item.certification %}{% when Some with (cert) %} · {{ cert }}{% when None %}{% endmatch %}

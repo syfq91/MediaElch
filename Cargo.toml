@@ -24,6 +24,8 @@ rust-version = "1.85"
 [workspace.dependencies]
 mediaelch-core = { path = "crates/mediaelch-core" }
 mediaelch-db = { path = "crates/mediaelch-db" }
+mediaelch-export = { path = "crates/mediaelch-export" }
+mediaelch-renamer = { path = "crates/mediaelch-renamer" }
 mediaelch-fs = { path = "crates/mediaelch-fs" }
 mediaelch-image = { path = "crates/mediaelch-image" }
 mediaelch-nfo = { path = "crates/mediaelch-nfo" }

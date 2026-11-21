@@ -244,6 +244,14 @@ impl<'a> MediaRepository<'a> {
             .map_err(DbError::from)
     }
 
+    pub fn set_primary_file(&self, item_id: i64, path: &Path) -> Result<(), DbError> {
+        self.conn.execute(
+            "UPDATE media_item SET primary_file = ?2, updated_at = datetime('now') WHERE id = ?1",
+            params![item_id, path_to_string(path)],
+        )?;
+        Ok(())
+    }
+
     pub fn set_parent(&self, item_id: i64, parent_id: i64) -> Result<(), DbError> {
         self.conn.execute(
             "UPDATE media_item SET parent_id = ?2 WHERE id = ?1",

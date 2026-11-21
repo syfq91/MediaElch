@@ -5,6 +5,7 @@ mod app;
 mod cli;
 mod config;
 mod ui;
+mod write_api;
 
 use std::error::Error;
 use std::path::PathBuf;

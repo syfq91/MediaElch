@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Tools · MediaElch{% endblock %}
+{% block content %}
+<article class="detail">
+  <h1>Tools</h1>
+
+  <h2>Save NFO</h2>
+  <p>Open an item and use <strong>Save NFO</strong> to write its Kodi sidecar.</p>
+
+  <h2>Rename files</h2>
+  <form hx-post="/api/rename/preview" hx-target="#rename-result" hx-swap="innerHTML">
+    <label>Pattern
+      <input name="pattern" size="60" value="&lt;title&gt;{year} (&lt;year&gt;){/year}.&lt;extension&gt;">
+    </label>
+    <label>Kind
+      <select name="kind">
+        <option value="">All</option>
+        <option value="movie">Movies</option>
+        <option value="tvshow">TV shows</option>
+        <option value="episode">Episodes</option>
+        <option value="concert">Concerts</option>
+      </select>
+    </label>
+    <button type="submit">Preview rename</button>
+  </form>
+  <pre id="rename-result" aria-live="polite"></pre>
+
+  <h2>Export</h2>
+  <form hx-post="/api/export" hx-target="#export-result" hx-swap="innerHTML">
+    <label>Format
+      <select name="format">
+        <option value="csv">CSV</option>
+        <option value="html">HTML</option>
+      </select>
+    </label>
+    <label>Kind
+      <select name="kind">
+        <option value="">All</option>
+        <option value="movie">Movies</option>
+        <option value="tvshow">TV shows</option>
+        <option value="episode">Episodes</option>
+      </select>
+    </label>
+    <button type="submit">Export</button>
+  </form>
+  <p id="export-result" aria-live="polite"></p>
+</article>
+{% endblock %}
