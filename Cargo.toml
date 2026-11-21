@@ -24,6 +24,8 @@ rust-version = "1.85"
 [workspace.dependencies]
 mediaelch-core = { path = "crates/mediaelch-core" }
 mediaelch-db = { path = "crates/mediaelch-db" }
+mediaelch-fs = { path = "crates/mediaelch-fs" }
+mediaelch-nfo = { path = "crates/mediaelch-nfo" }
 regex = "1"
 roxmltree = "0.20"
 walkdir = "2"

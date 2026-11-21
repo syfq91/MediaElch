@@ -176,8 +176,9 @@ impl<'a> MediaRepository<'a> {
         let mut statement = self
             .conn
             .prepare("SELECT * FROM media_item WHERE id = ?1")?;
-        let loaded = statement.query_row([id], |row| self.row_to_item(row))?;
-        let mut item = Some(loaded);
+        let mut item = statement
+            .query_row([id], |row| self.row_to_item(row))
+            .optional()?;
         if let Some(item) = item.as_mut() {
             self.load_children(item)?;
         }
@@ -241,6 +242,14 @@ impl<'a> MediaRepository<'a> {
                 |row| row.get(0),
             )
             .map_err(DbError::from)
+    }
+
+    pub fn set_parent(&self, item_id: i64, parent_id: i64) -> Result<(), DbError> {
+        self.conn.execute(
+            "UPDATE media_item SET parent_id = ?2 WHERE id = ?1",
+            params![item_id, parent_id],
+        )?;
+        Ok(())
     }
 
     /// Remove all items before a full rescan. Child rows are removed by the

@@ -1,5 +1,7 @@
 //! HTTP router and shared application state.
 
+use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use axum::extract::State;
@@ -8,12 +10,37 @@ use axum::response::Html;
 use axum::routing::get;
 use axum::{Json, Router};
 use mediaelch_db::Database;
+use mediaelch_fs::ScanRoot;
 use serde::{Deserialize, Serialize};
+
+use crate::api::{self, ScanJob};
 
 /// State shared by every request handler.
 pub struct AppState {
     pub db: Arc<Mutex<Database>>,
     pub version: &'static str,
+    pub roots: Vec<ScanRoot>,
+    pub data_dir: PathBuf,
+    pub scan_jobs: Arc<Mutex<HashMap<String, ScanJob>>>,
+    pub job_counter: Arc<Mutex<u64>>,
+}
+
+impl AppState {
+    pub fn new(
+        db: Database,
+        version: &'static str,
+        roots: Vec<ScanRoot>,
+        data_dir: PathBuf,
+    ) -> Self {
+        Self {
+            db: Arc::new(Mutex::new(db)),
+            version,
+            roots,
+            data_dir,
+            scan_jobs: Arc::new(Mutex::new(HashMap::new())),
+            job_counter: Arc::new(Mutex::new(0)),
+        }
+    }
 }
 
 /// Response body of `GET /healthz`.
@@ -36,6 +63,7 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/", get(root))
         .route("/healthz", get(healthz))
         .route("/api/version", get(version))
+        .merge(api::routes())
         .with_state(state)
 }
 
@@ -85,12 +113,13 @@ mod tests {
     use tower::ServiceExt;
 
     fn test_router() -> Router {
-        let db = Database::open_in_memory().unwrap();
-        let state = Arc::new(AppState {
-            db: Arc::new(Mutex::new(db)),
-            version: "test-version",
-        });
-        router(state)
+        let state = AppState::new(
+            Database::open_in_memory().unwrap(),
+            "test-version",
+            Vec::new(),
+            PathBuf::from("/tmp"),
+        );
+        router(Arc::new(state))
     }
 
     async fn body_json<T: serde::de::DeserializeOwned>(response: axum::response::Response) -> T {
