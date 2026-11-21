@@ -22,10 +22,16 @@ rust-version = "1.85"
 
 # Entries are added as the corresponding phase starts using them.
 [workspace.dependencies]
+mediaelch-db = { path = "crates/mediaelch-db" }
 serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 clap = { version = "4", features = ["derive", "env"] }
 figment = { version = "0.10", features = ["toml", "env"] }
 thiserror = "2"
 tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tokio = { version = "1", features = ["full"] }
+axum = "0.8"
+tower = { version = "0.5", features = ["util"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
 tempfile = "3"

@@ -1,0 +1,170 @@
+//! HTTP router and shared application state.
+
+use std::sync::{Arc, Mutex};
+
+use axum::extract::State;
+use axum::http::StatusCode;
+use axum::response::Html;
+use axum::routing::get;
+use axum::{Json, Router};
+use mediaelch_db::Database;
+use serde::{Deserialize, Serialize};
+
+/// State shared by every request handler.
+pub struct AppState {
+    pub db: Arc<Mutex<Database>>,
+    pub version: &'static str,
+}
+
+/// Response body of `GET /healthz`.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Health {
+    pub status: String,
+    pub version: String,
+    pub database: String,
+}
+
+/// Response body of `GET /api/version`.
+#[derive(Debug, Serialize, Deserialize)]
+struct VersionInfo {
+    name: String,
+    version: String,
+}
+
+pub fn router(state: Arc<AppState>) -> Router {
+    Router::new()
+        .route("/", get(root))
+        .route("/healthz", get(healthz))
+        .route("/api/version", get(version))
+        .with_state(state)
+}
+
+async fn root() -> Html<&'static str> {
+    Html(
+        "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">\
+         <title>MediaElch</title></head><body><h1>MediaElch server</h1>\
+         <p>The headless server is running. The web UI is added in a later phase.</p>\
+         </body></html>",
+    )
+}
+
+async fn healthz(State(state): State<Arc<AppState>>) -> (StatusCode, Json<Health>) {
+    let database_ok = match state.db.lock() {
+        Ok(db) => db
+            .connection()
+            .query_row("SELECT 1", [], |_| Ok(()))
+            .is_ok(),
+        Err(_) => false,
+    };
+
+    let status = if database_ok {
+        StatusCode::OK
+    } else {
+        StatusCode::SERVICE_UNAVAILABLE
+    };
+    let body = Health {
+        status: if database_ok { "ok" } else { "unavailable" }.to_owned(),
+        version: state.version.to_owned(),
+        database: if database_ok { "ok" } else { "unavailable" }.to_owned(),
+    };
+    (status, Json(body))
+}
+
+async fn version(State(state): State<Arc<AppState>>) -> Json<VersionInfo> {
+    Json(VersionInfo {
+        name: "MediaElch".to_owned(),
+        version: state.version.to_owned(),
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::body::Body;
+    use axum::http::Request;
+    use tower::ServiceExt;
+
+    fn test_router() -> Router {
+        let db = Database::open_in_memory().unwrap();
+        let state = Arc::new(AppState {
+            db: Arc::new(Mutex::new(db)),
+            version: "test-version",
+        });
+        router(state)
+    }
+
+    async fn body_json<T: serde::de::DeserializeOwned>(response: axum::response::Response) -> T {
+        let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .unwrap();
+        serde_json::from_slice(&bytes).unwrap()
+    }
+
+    #[tokio::test]
+    async fn healthz_returns_ok_when_database_is_reachable() {
+        let response = test_router()
+            .oneshot(
+                Request::builder()
+                    .uri("/healthz")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        let health: Health = body_json(response).await;
+        assert_eq!(health.status, "ok");
+        assert_eq!(health.database, "ok");
+        assert_eq!(health.version, "test-version");
+    }
+
+    #[tokio::test]
+    async fn version_endpoint_reports_the_build_version() {
+        let response = test_router()
+            .oneshot(
+                Request::builder()
+                    .uri("/api/version")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        let info: VersionInfo = body_json(response).await;
+        assert_eq!(info.name, "MediaElch");
+        assert_eq!(info.version, "test-version");
+    }
+
+    #[tokio::test]
+    async fn root_serves_html() {
+        let response = test_router()
+            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .unwrap();
+        assert!(String::from_utf8(body.to_vec())
+            .unwrap()
+            .contains("MediaElch"));
+    }
+
+    #[tokio::test]
+    async fn unknown_route_is_not_found() {
+        let response = test_router()
+            .oneshot(
+                Request::builder()
+                    .uri("/does-not-exist")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    }
+}
